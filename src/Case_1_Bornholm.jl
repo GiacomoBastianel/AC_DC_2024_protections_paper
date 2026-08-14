@@ -2,7 +2,6 @@ using PowerModels; const _PM = PowerModels
 using PowerModelsACDC; const _PMACDC = PowerModelsACDC
 using Gurobi
 using JuMP
-#using Plots
 using Feather
 using JSON
 using Ipopt
