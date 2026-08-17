@@ -2,9 +2,9 @@ using PowerModels; const _PM = PowerModels
 using PowerModelsACDC; const _PMACDC = PowerModelsACDC
 using Gurobi
 using JuMP
-using Feather
 using JSON
 using Ipopt
+import ACDC_2024_paper as _ACDC24 
 
 gurobi = JuMP.optimizer_with_attributes(Gurobi.Optimizer)
 ipopt = JuMP.optimizer_with_attributes(Ipopt.Optimizer)
@@ -12,14 +12,11 @@ set_optimizer_attribute(ipopt, "max_iter", 6000)
 
 ##################################################################
 ## Processing input data
-personal_onedrive_folder = "/Users/giacomobastianel/Library/CloudStorage/OneDrive-KULeuven"
-
-folder_results = joinpath(personal_onedrive_folder,"AC_DC_2024_protections_paper/Results")
-
-folder_julia = @__DIR__
+folder_julia = dirname(@__DIR__)
+folder_results = joinpath(folder_julia,"Results")
 
 # Belgium grid with energy island
-BE_grid_energy_island_file = abspath(joinpath(folder_julia,"../test_cases/Belgian_transmission_grid_synthetic_2023_with_DK.json")) # This has line 107, the energy island file does not have it
+BE_grid_energy_island_file = abspath(joinpath(folder_julia,"Test_cases/Belgian_transmission_grid_synthetic_2023_with_DK.json")) # This has line 107, the energy island file does not have it
 BE_grid_energy_island = _PM.parse_file(BE_grid_energy_island_file)
 
 # New developments
@@ -89,61 +86,67 @@ end
 ##################################################################
 ## Choosing the number of hours, scenario and climate year
 number_of_hours = 8760
-scenario = "DE2040"
-year = "1984"
-year_int = parse(Int64,year)
+startHour = 1
+scenario = "DE"
+year = 2030
+CY = 1995
+
+DE_zone = "DE00"
+BE_zone = "BE_00"
+DK_zone = "DKW1"
+UK_zone = "UK00"
+FR_zone = "FR00"
 
 ##################################################################
 ## Processing time series -> this needs to be fixed for Github!
 # Creating RES time series for Belgium from Feather files in tyndpdata desktop folder
-pv, wind_onshore, wind_offshore = _WP1.load_res_data()
+pv, wind_onshore, wind_offshore = _ACDC24.load_res_data()
 
-wind_onshore_BE, wind_offshore_BE, solar_pv_BE = _WP1.make_res_time_series(wind_onshore, wind_offshore, pv, "BE00",year_int)
-wind_onshore_UK, wind_offshore_UK, solar_pv_UK = _WP1.make_res_time_series(wind_onshore, wind_offshore, pv, "UK00",year_int)
-wind_onshore_DK, wind_offshore_DK, solar_pv_DK = _WP1.make_res_time_series(wind_onshore, wind_offshore, pv, "DKW1",year_int)
-wind_onshore_FR, wind_offshore_FR, solar_pv_FR = _WP1.make_res_time_series(wind_onshore, wind_offshore, pv, "FR00",year_int)
-wind_onshore_DE, wind_offshore_DE, solar_pv_DE = _WP1.make_res_time_series(wind_onshore, wind_offshore, pv, "DE00",year_int)
+wind_onshore_BE, wind_offshore_BE, solar_pv_BE = _ACDC24.make_res_time_series(wind_onshore, wind_offshore, pv, BE_zone,CY)
+wind_onshore_UK, wind_offshore_UK, solar_pv_UK = _ACDC24.make_res_time_series(wind_onshore, wind_offshore, pv, UK_zone,CY)
+wind_onshore_DK, wind_offshore_DK, solar_pv_DK = _ACDC24.make_res_time_series(wind_onshore, wind_offshore, pv, DK_zone,CY)
+wind_onshore_FR, wind_offshore_FR, solar_pv_FR = _ACDC24.make_res_time_series(wind_onshore, wind_offshore, pv, FR_zone,CY)
+wind_onshore_DE, wind_offshore_DE, solar_pv_DE = _ACDC24.make_res_time_series(wind_onshore, wind_offshore, pv, DE_zone,CY)
 
 # Creating load series for Belgium from TYNDP data 
-load_series_DE = _WP1.create_load_series(scenario,year,"DE00",1,number_of_hours)
-load_series_FR = _WP1.create_load_series(scenario,year,"FR00",1,number_of_hours)
-load_series_BE = _WP1.create_load_series(scenario,year,"BE00",1,number_of_hours)
-load_series_UK= _WP1.create_load_series(scenario,year,"UK00",1,number_of_hours)
-load_series_DK = _WP1.create_load_series(scenario,year,"DKW1",1,number_of_hours)
+load_series_DE = _ACDC24.create_load_series(scenario,year,CY,DE_zone,startHour,number_of_hours)
+load_series_FR = _ACDC24.create_load_series(scenario,year,CY,FR_zone,startHour,number_of_hours)
+load_series_BE = _ACDC24.create_load_series(scenario,year,CY,BE_zone,startHour,number_of_hours)
+load_series_UK = _ACDC24.create_load_series(scenario,year,CY,UK_zone,startHour,number_of_hours)
+load_series_DK = _ACDC24.create_load_series(scenario,year,CY,DK_zone,startHour,number_of_hours)
 
 ###############################################################
 # Running the OPF for the base case
 s = Dict("output" => Dict("branch_flows" => true), "conv_losses_mp" => true)
 
-function PEI_simulation_pole_to_ground_low(grid,DCCB,preventive_decoupling)
-    _WP1.add_France_2040_low_PEI(grid)
-    _WP1.add_UK_2040_low(grid)
-    _WP1.add_Belgium_2040_low(grid)
-    _WP1.add_Germany_2040_low_PEI(grid)
-    _WP1.add_Denmark_W_2040_low_PEI(grid)
+function PEI_simulation_pole_to_ground_low(grid,DCCB,preventive_decoupling, results_folder=folder_results)
+    _ACDC24.add_France_2040_low_PEI(grid)
+    _ACDC24.add_UK_2040_low(grid)
+    _ACDC24.add_Belgium_2040_low(grid)
+    _ACDC24.add_Germany_2040_low_PEI(grid)
+    _ACDC24.add_Denmark_W_2040_low_PEI(grid)
 
-    gen_costs,inertia_constants,emission_factor_CO2,start_up_cost,emission_factor_NOx,emission_factor_SOx = _WP1.gen_values()
-    _WP1.assigning_gen_values(grid,gen_costs,inertia_constants,emission_factor_CO2,start_up_cost,emission_factor_NOx,emission_factor_SOx)
-    _WP1.add_VOLL_generators(grid)
+    gen_costs,inertia_constants,emission_factor_CO2,start_up_cost,emission_factor_NOx,emission_factor_SOx = _ACDC24.gen_values()
+    _ACDC24.assigning_gen_values(grid,gen_costs,inertia_constants,emission_factor_CO2,start_up_cost,emission_factor_NOx,emission_factor_SOx)
+    _ACDC24.add_VOLL_generators(grid)
     
     json_string_test_case = JSON.json(grid)
-    results_folder = "/Users/giacomobastianel/Library/CloudStorage/OneDrive-KULeuven/AC_DC_2024_protections_paper/Results"
     open(joinpath(results_folder,"PEI_simulation_pole_to_ground_low_test_case_11_06_25.json"),"w") do f 
         write(f, json_string_test_case) 
     end
 
     for hour in 1:8760
         hourly_grid = deepcopy(grid)
-        _WP1.fix_hourly_load(hourly_grid,hour,load_series_BE,"BE00")
-        _WP1.fix_hourly_load(hourly_grid,hour,load_series_FR,"FR00")
-        _WP1.fix_hourly_load(hourly_grid,hour,load_series_DE,"DE00")
-        _WP1.fix_hourly_load(hourly_grid,hour,load_series_BE,"DKW1")
-        _WP1.fix_hourly_load(hourly_grid,hour,load_series_BE,"UK00")
-        _WP1.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_BE,wind_offshore_BE,solar_pv_BE,"BE00")
-        _WP1.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_FR,wind_offshore_FR,solar_pv_FR,"FR00")
-        _WP1.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_DE,wind_offshore_DE,solar_pv_DE,"DE00")
-        _WP1.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_UK,wind_offshore_UK,solar_pv_UK,"UK00")
-        _WP1.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_DK,wind_offshore_DK,solar_pv_DK,"DKW1")
+        _ACDC24.fix_hourly_load(hourly_grid,hour,load_series_BE,"BE00")
+        _ACDC24.fix_hourly_load(hourly_grid,hour,load_series_FR,"FR00")
+        _ACDC24.fix_hourly_load(hourly_grid,hour,load_series_DE,"DE00")
+        _ACDC24.fix_hourly_load(hourly_grid,hour,load_series_BE,"DKW1")
+        _ACDC24.fix_hourly_load(hourly_grid,hour,load_series_BE,"UK00")
+        _ACDC24.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_BE,wind_offshore_BE,solar_pv_BE,"BE00")
+        _ACDC24.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_FR,wind_offshore_FR,solar_pv_FR,"FR00")
+        _ACDC24.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_DE,wind_offshore_DE,solar_pv_DE,"DE00")
+        _ACDC24.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_UK,wind_offshore_UK,solar_pv_UK,"UK00")
+        _ACDC24.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_DK,wind_offshore_DK,solar_pv_DK,"DKW1")
         hourly_results = _PMACDC.run_acdcopf(hourly_grid,formulation, optimizer; setting = s)
         if length(hourly_results["solution"]) > 5
             DCCB["$hour"] = deepcopy(hourly_results)
@@ -158,35 +161,34 @@ function PEI_simulation_pole_to_ground_low(grid,DCCB,preventive_decoupling)
     end
 end
 
-function PEI_simulation_pole_to_ground_high(grid,DCCB,preventive_decoupling)
+function PEI_simulation_pole_to_ground_high(grid,DCCB,preventive_decoupling, results_folder = folder_results)
     add_France_2040_high_PEI(grid)
-    _WP1.add_UK_2040_high(grid)
-    _WP1.add_Belgium_2040_high(grid)
-    _WP1.add_Germany_2040_high_PEI(grid)
-    _WP1.add_Denmark_W_2040_high_PEI(grid)
+    _ACDC24.add_UK_2040_high(grid)
+    _ACDC24.add_Belgium_2040_high(grid)
+    _ACDC24.add_Germany_2040_high_PEI(grid)
+    _ACDC24.add_Denmark_W_2040_high_PEI(grid)
 
-    gen_costs,inertia_constants,emission_factor_CO2,start_up_cost,emission_factor_NOx,emission_factor_SOx = _WP1.gen_values()
-    _WP1.assigning_gen_values(grid,gen_costs,inertia_constants,emission_factor_CO2,start_up_cost,emission_factor_NOx,emission_factor_SOx)
-    _WP1.add_VOLL_generators(grid)
+    gen_costs,inertia_constants,emission_factor_CO2,start_up_cost,emission_factor_NOx,emission_factor_SOx = _ACDC24.gen_values()
+    _ACDC24.assigning_gen_values(grid,gen_costs,inertia_constants,emission_factor_CO2,start_up_cost,emission_factor_NOx,emission_factor_SOx)
+    _ACDC24.add_VOLL_generators(grid)
     
     json_string_test_case = JSON.json(grid)
-    results_folder = "/Users/giacomobastianel/Library/CloudStorage/OneDrive-KULeuven/AC_DC_2024_protections_paper/Results"
     open(joinpath(results_folder,"PEI_simulation_pole_to_ground_high_test_case_11_06_25.json"),"w") do f 
         write(f, json_string_test_case) 
     end
 
     for hour in 1:8760
         hourly_grid = deepcopy(grid)
-        _WP1.fix_hourly_load(hourly_grid,hour,load_series_BE,"BE00")
-        _WP1.fix_hourly_load(hourly_grid,hour,load_series_FR,"FR00")
-        _WP1.fix_hourly_load(hourly_grid,hour,load_series_DE,"DE00")
-        _WP1.fix_hourly_load(hourly_grid,hour,load_series_BE,"DKW1")
-        _WP1.fix_hourly_load(hourly_grid,hour,load_series_BE,"UK00")
-        _WP1.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_BE,wind_offshore_BE,solar_pv_BE,"BE00")
-        _WP1.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_FR,wind_offshore_FR,solar_pv_FR,"FR00")
-        _WP1.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_DE,wind_offshore_DE,solar_pv_DE,"DE00")
-        _WP1.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_UK,wind_offshore_UK,solar_pv_UK,"UK00")
-        _WP1.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_DK,wind_offshore_DK,solar_pv_DK,"DKW1")
+        _ACDC24.fix_hourly_load(hourly_grid,hour,load_series_BE,"BE00")
+        _ACDC24.fix_hourly_load(hourly_grid,hour,load_series_FR,"FR00")
+        _ACDC24.fix_hourly_load(hourly_grid,hour,load_series_DE,"DE00")
+        _ACDC24.fix_hourly_load(hourly_grid,hour,load_series_BE,"DKW1")
+        _ACDC24.fix_hourly_load(hourly_grid,hour,load_series_BE,"UK00")
+        _ACDC24.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_BE,wind_offshore_BE,solar_pv_BE,"BE00")
+        _ACDC24.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_FR,wind_offshore_FR,solar_pv_FR,"FR00")
+        _ACDC24.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_DE,wind_offshore_DE,solar_pv_DE,"DE00")
+        _ACDC24.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_UK,wind_offshore_UK,solar_pv_UK,"UK00")
+        _ACDC24.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_DK,wind_offshore_DK,solar_pv_DK,"DKW1")
         hourly_results = _PMACDC.run_acdcopf(hourly_grid,formulation, optimizer; setting = s)
         if length(hourly_results["solution"]) > 5
             DCCB["$hour"] = deepcopy(hourly_results)
@@ -201,19 +203,18 @@ function PEI_simulation_pole_to_ground_high(grid,DCCB,preventive_decoupling)
     end
 end
 
-function PEI_simulation_pole_to_pole_low(grid,DCCB,preventive_decoupling)
-    _WP1.add_France_2040_low_PEI(grid)
-    _WP1.add_UK_2040_low(grid)
-    _WP1.add_Belgium_2040_low(grid)
-    _WP1.add_Germany_2040_low_PEI(grid)
-    _WP1.add_Denmark_W_2040_low_PEI(grid)
+function PEI_simulation_pole_to_pole_low(grid,DCCB,preventive_decoupling,results_folder=folder_results)
+    _ACDC24.add_France_2040_low_PEI(grid)
+    _ACDC24.add_UK_2040_low(grid)
+    _ACDC24.add_Belgium_2040_low(grid)
+    _ACDC24.add_Germany_2040_low_PEI(grid)
+    _ACDC24.add_Denmark_W_2040_low_PEI(grid)
 
     gen_costs,inertia_constants,emission_factor_CO2,start_up_cost,emission_factor_NOx,emission_factor_SOx = _WP1.gen_values()
-    _WP1.assigning_gen_values(grid,gen_costs,inertia_constants,emission_factor_CO2,start_up_cost,emission_factor_NOx,emission_factor_SOx)
-    _WP1.add_VOLL_generators(grid)
+    _ACDC24.assigning_gen_values(grid,gen_costs,inertia_constants,emission_factor_CO2,start_up_cost,emission_factor_NOx,emission_factor_SOx)
+    _ACDC24.add_VOLL_generators(grid)
     
     json_string_test_case = JSON.json(grid)
-    results_folder = "/Users/giacomobastianel/Library/CloudStorage/OneDrive-KULeuven/AC_DC_2024_protections_paper/Results"
     open(joinpath(results_folder,"PEI_simulation_pole_to_pole_low_test_case_11_06_25.json"),"w") do f 
         write(f, json_string_test_case) 
     end
@@ -221,16 +222,16 @@ function PEI_simulation_pole_to_pole_low(grid,DCCB,preventive_decoupling)
 
     for hour in 1:8760
         hourly_grid = deepcopy(grid)
-        _WP1.fix_hourly_load(hourly_grid,hour,load_series_BE,"BE00")
-        _WP1.fix_hourly_load(hourly_grid,hour,load_series_FR,"FR00")
-        _WP1.fix_hourly_load(hourly_grid,hour,load_series_DE,"DE00")
-        _WP1.fix_hourly_load(hourly_grid,hour,load_series_BE,"DKW1")
-        _WP1.fix_hourly_load(hourly_grid,hour,load_series_BE,"UK00")
-        _WP1.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_BE,wind_offshore_BE,solar_pv_BE,"BE00")
-        _WP1.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_FR,wind_offshore_FR,solar_pv_FR,"FR00")
-        _WP1.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_DE,wind_offshore_DE,solar_pv_DE,"DE00")
-        _WP1.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_UK,wind_offshore_UK,solar_pv_UK,"UK00")
-        _WP1.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_DK,wind_offshore_DK,solar_pv_DK,"DKW1")
+        _ACDC24.fix_hourly_load(hourly_grid,hour,load_series_BE,"BE00")
+        _ACDC24.fix_hourly_load(hourly_grid,hour,load_series_FR,"FR00")
+        _ACDC24.fix_hourly_load(hourly_grid,hour,load_series_DE,"DE00")
+        _ACDC24.fix_hourly_load(hourly_grid,hour,load_series_BE,"DKW1")
+        _ACDC24.fix_hourly_load(hourly_grid,hour,load_series_BE,"UK00")
+        _ACDC24.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_BE,wind_offshore_BE,solar_pv_BE,"BE00")
+        _ACDC24.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_FR,wind_offshore_FR,solar_pv_FR,"FR00")
+        _ACDC24.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_DE,wind_offshore_DE,solar_pv_DE,"DE00")
+        _ACDC24.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_UK,wind_offshore_UK,solar_pv_UK,"UK00")
+        _ACDC24.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_DK,wind_offshore_DK,solar_pv_DK,"DKW1")
         hourly_results = _PMACDC.run_acdcopf(hourly_grid,formulation, optimizer; setting = s)
         if length(hourly_results["solution"]) > 5
             DCCB["$hour"] = deepcopy(hourly_results)
@@ -245,35 +246,34 @@ function PEI_simulation_pole_to_pole_low(grid,DCCB,preventive_decoupling)
     end
 end
 
-function PEI_simulation_pole_to_pole_high(grid,DCCB,preventive_decoupling)
-    add_France_2040_high_PEI(grid)
-    _WP1.add_UK_2040_high(grid)
-    _WP1.add_Belgium_2040_high(grid)
-    _WP1.add_Germany_2040_high_PEI(grid)
-    _WP1.add_Denmark_W_2040_high_PEI(grid)
+function PEI_simulation_pole_to_pole_high(grid,DCCB,preventive_decoupling,results_folder=folder_results)
+    _ACDC24.add_France_2040_high_PEI(grid)
+    _ACDC24.add_UK_2040_high(grid)
+    _ACDC24.add_Belgium_2040_high(grid)
+    _ACDC24.add_Germany_2040_high_PEI(grid)
+    _ACDC24.add_Denmark_W_2040_high_PEI(grid)
 
-    gen_costs,inertia_constants,emission_factor_CO2,start_up_cost,emission_factor_NOx,emission_factor_SOx = _WP1.gen_values()
-    _WP1.assigning_gen_values(grid,gen_costs,inertia_constants,emission_factor_CO2,start_up_cost,emission_factor_NOx,emission_factor_SOx)
-    _WP1.add_VOLL_generators(grid)
+    gen_costs,inertia_constants,emission_factor_CO2,start_up_cost,emission_factor_NOx,emission_factor_SOx = _ACDC24.gen_values()
+    _ACDC24.assigning_gen_values(grid,gen_costs,inertia_constants,emission_factor_CO2,start_up_cost,emission_factor_NOx,emission_factor_SOx)
+    _ACDC24.add_VOLL_generators(grid)
     
     json_string_test_case = JSON.json(grid)
-    results_folder = "/Users/giacomobastianel/Library/CloudStorage/OneDrive-KULeuven/AC_DC_2024_protections_paper/Results"
     open(joinpath(results_folder,"PEI_simulation_pole_to_pole_high_test_case_11_06_25.json"),"w") do f 
         write(f, json_string_test_case) 
     end
 
     for hour in 1:8760
         hourly_grid = deepcopy(grid)
-        _WP1.fix_hourly_load(hourly_grid,hour,load_series_BE,"BE00")
-        _WP1.fix_hourly_load(hourly_grid,hour,load_series_FR,"FR00")
-        _WP1.fix_hourly_load(hourly_grid,hour,load_series_DE,"DE00")
-        _WP1.fix_hourly_load(hourly_grid,hour,load_series_BE,"DKW1")
-        _WP1.fix_hourly_load(hourly_grid,hour,load_series_BE,"UK00")
-        _WP1.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_BE,wind_offshore_BE,solar_pv_BE,"BE00")
-        _WP1.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_FR,wind_offshore_FR,solar_pv_FR,"FR00")
-        _WP1.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_DE,wind_offshore_DE,solar_pv_DE,"DE00")
-        _WP1.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_UK,wind_offshore_UK,solar_pv_UK,"UK00")
-        _WP1.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_DK,wind_offshore_DK,solar_pv_DK,"DKW1")
+        _ACDC24.fix_hourly_load(hourly_grid,hour,load_series_BE,"BE00")
+        _ACDC24.fix_hourly_load(hourly_grid,hour,load_series_FR,"FR00")
+        _ACDC24.fix_hourly_load(hourly_grid,hour,load_series_DE,"DE00")
+        _ACDC24.fix_hourly_load(hourly_grid,hour,load_series_BE,"DKW1")
+        _ACDC24.fix_hourly_load(hourly_grid,hour,load_series_BE,"UK00")
+        _ACDC24.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_BE,wind_offshore_BE,solar_pv_BE,"BE00")
+        _ACDC24.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_FR,wind_offshore_FR,solar_pv_FR,"FR00")
+        _ACDC24.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_DE,wind_offshore_DE,solar_pv_DE,"DE00")
+        _ACDC24.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_UK,wind_offshore_UK,solar_pv_UK,"UK00")
+        _ACDC24.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_DK,wind_offshore_DK,solar_pv_DK,"DKW1")
         hourly_results = _PMACDC.run_acdcopf(hourly_grid,formulation, optimizer; setting = s)
         if length(hourly_results["solution"]) > 5
             DCCB["$hour"] = deepcopy(hourly_results)
@@ -329,12 +329,12 @@ json_string_8 = JSON.json(results_preventive_decoupling_PEI_ptp_high)
 
 json_string_test_case = JSON.json(BE_grid_energy_island)
 
-results_folder = "/Users/giacomobastianel/Library/CloudStorage/OneDrive-KULeuven/AC_DC_2024_protections_paper/Results"
+results_folder = folder_results
 open(joinpath(results_folder,"PEI_test_case_11_06_25.json"),"w") do f 
     write(f, json_string_test_case) 
 end
 
-results_folder = "/Users/giacomobastianel/Library/CloudStorage/OneDrive-KULeuven/AC_DC_2024_protections_paper/Results"
+results_folder = folder_results
 open(joinpath(results_folder,"PEI_results_DCCB_ptg_low_$(number_of_hours)_11_06_25.json"),"w") do f 
     write(f, json_string_1) 
 end

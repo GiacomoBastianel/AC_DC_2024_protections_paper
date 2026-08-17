@@ -2,19 +2,19 @@
 #  load_data.jl
 #############################################################################
 
-function load_res_data()
+function load_res_data(data_folder::String=dataDir)
  ## RES TIME SERIES as feather files (~ 350 MB)
  # wind_onshore_file_link = "https://zenodo.org/record/3702418/files/PECD-MAF2019-wide-WindOnshore.feather?download=1"
  # wind_offhore_file_link = "https://zenodo.org/record/3702418/files/PECD-MAF2019-wide-WindOffshore.feather?download=1"
  # pv_file_link = "https://zenodo.org/record/3702418/files/PECD-MAF2019-wide-PV.feather?download=1" 
- # If files are saved locally under folder scenarios
- file_wind_onshore  = join("/Users/giacomobastianel/Desktop/tyndpdata/scenarios/PECD-MAF2019-wide-WindOnshore.feather")
- file_wind_offshore = join("/Users/giacomobastianel/Desktop/tyndpdata/scenarios/PECD-MAF2019-wide-WindOffshore.feather")
- file_pv            = join("/Users/giacomobastianel/Desktop/tyndpdata/scenarios/PECD-MAF2019-wide-PV.feather")                 
- 
- pv = Feather.read(file_pv) 
- wind_onshore = Feather.read(file_wind_onshore)
- wind_offshore = Feather.read(file_wind_offshore)
+              
+ file_wind_onshore = joinpath(data_folder,"PECD-MAF2019-wide-WindOnshore.feather")
+ file_wind_offshore = joinpath(data_folder,"PECD-MAF2019-wide-WindOffshore.feather")
+ file_pv = joinpath(data_folder,"PECD-MAF2019-wide-PV.feather")
+
+ pv = ftr.read(file_pv) 
+ wind_onshore = ftr.read(file_wind_onshore)
+ wind_offshore = ftr.read(file_wind_offshore)
  # Alternatively one can use to download data: (this might take a couple of minutes)
  # pv = Feather.read(download(pv_file_link))
  # wind_onshore = Feather.read(download(wind_onshore_file_link))
@@ -60,30 +60,19 @@ function load_res_data_Elia()
     return pv, wind_onshore, wind_offshore
 end
 
-function make_res_time_series(wind_onshore, wind_offshore, pv, zone,year)
+function make_res_time_series(wind_onshore, wind_offshore, pv, zone,CY)
 
     print("==============GENERATE TIME SERIES ", zone, " =======================","\n")
-    wind_onshore_zone = []
-    wind_offshore_zone = []
-    solar_pv_zone = []
-    corrected_year = year - 1981 + 4
+    CY_str = string(CY)
+    nPV = size(pv,1)
+    T = 1:nPV
 
-    #wind_on = []
-    #push!(wind_on,wind_onshore[!,5][1])
-
-
-    for i in 1:1217640#length(wind_onshore[!,1])
-        if wind_onshore[!,1][i] == zone
-        push!(wind_onshore_zone, wind_onshore[!,corrected_year][i])
-        end
-        if wind_offshore[!,1][i] == zone
-            push!(wind_offshore_zone, wind_offshore[!,corrected_year][i])
-        end
-        if pv[!,1][i] == zone
-            push!(solar_pv_zone, pv[!,corrected_year][i])
-        end   
-    end
-
+    wind_onshore_zone = wind_onshore[[x for x in T if wind_onshore.area[x] == zone],CY_str]
+    wind_onshore_zone[isnan.(wind_onshore_zone)] .= 0.0
+    wind_offshore_zone = wind_offshore[[x for x in T if wind_offshore.area[x]== zone],CY_str]
+    wind_offshore_zone[isnan.(wind_onshore_zone)] .= 0.0
+    solar_pv_zone = pv[[x for x in T if pv.area[x] == zone],CY_str]
+    solar_pv_zone[isnan.(wind_onshore_zone)] .= 0.0
     return wind_onshore_zone, wind_offshore_zone, solar_pv_zone
 end
 

@@ -2,9 +2,9 @@ using PowerModels; const _PM = PowerModels
 using PowerModelsACDC; const _PMACDC = PowerModelsACDC
 using Gurobi
 using JuMP
-using Feather
 using JSON
 using Ipopt
+import ACDC_2024_paper as _ACDC24
 
 
 gurobi = JuMP.optimizer_with_attributes(Gurobi.Optimizer)
@@ -13,11 +13,10 @@ set_optimizer_attribute(ipopt, "max_iter", 6000)
 
 ##################################################################
 ## Processing input data
-personal_onedrive_folder = "/Users/giacomobastianel/Library/CloudStorage/OneDrive-KULeuven"
+# personal_onedrive_folder = "/Users/giacomobastianel/Library/CloudStorage/OneDrive-KULeuven"
 
-folder_results = joinpath(personal_onedrive_folder,"AC_DC_2024_protections_paper/Results")
-
-folder_julia = @__DIR__
+folder_julia = dirname(@__DIR__)
+folder_results = joinpath(folder_julia,"Results")
 
 # Belgium grid with energy island
 Bornholm_file = abspath(joinpath(folder_julia,"Test_cases/Case_1_AC_DC_paper.json")) # This has line 107, the energy island file does not have it
@@ -42,24 +41,29 @@ end
 ##################################################################
 ## Choosing the number of hours, scenario and climate year
 number_of_hours = 8760
-scenario = "DE2040"
-year = "1984"
-year_int = parse(Int64,year)
+scenario = "DE"
+startHour = 1
+year = 2030
+CY = 1995
+
+DE_zone = "DE00"
+SE_zone = "SE04"
+DK_zone = "DEW1"
 
 ##################################################################
 ## Processing time series -> this needs to be fixed for Github!
 # Creating RES time series for Belgium from Feather files in tyndpdata desktop folder
-pv, wind_onshore, wind_offshore = _WP1.load_res_data()
+pv, wind_onshore, wind_offshore = _ACDC24.load_res_data()
 
-wind_onshore_DE, wind_offshore_DE, solar_pv_DE = _WP1.make_res_time_series(wind_onshore, wind_offshore, pv, "DE00",year_int)
-wind_onshore_SE, wind_offshore_SE, solar_pv_SE = _WP1.make_res_time_series(wind_onshore, wind_offshore, pv, "SE04",year_int)
-wind_onshore_DK, wind_offshore_DK, solar_pv_DK = _WP1.make_res_time_series(wind_onshore, wind_offshore, pv, "DKW1",year_int)
+wind_onshore_DE, wind_offshore_DE, solar_pv_DE = _WP1.make_res_time_series(wind_onshore, wind_offshore, pv, DE_zone,CY)
+wind_onshore_SE, wind_offshore_SE, solar_pv_SE = _WP1.make_res_time_series(wind_onshore, wind_offshore, pv, SE_zone,CY)
+wind_onshore_DK, wind_offshore_DK, solar_pv_DK = _WP1.make_res_time_series(wind_onshore, wind_offshore, pv, DK_zone,CY)
 
 
 # Creating load series for Belgium from TYNDP data 
-load_series_DE = _WP1.create_load_series(scenario,year,"DE00",1,number_of_hours)
-load_series_SE = _WP1.create_load_series(scenario,year,"SE04",1,number_of_hours)
-load_series_DK = _WP1.create_load_series(scenario,year,"DKW1",1,number_of_hours)
+load_series_DE = _WP1.create_load_series(scenario,year,CY,DE_zone,startHour,number_of_hours)
+load_series_SE = _WP1.create_load_series(scenario,year,CY,SE_zone,startHour,number_of_hours)
+load_series_DK = _WP1.create_load_series(scenario,year,CY,DK_zone,startHour,number_of_hours)
 
 ###############################################################
 # Running the OPF for the base case
@@ -134,21 +138,21 @@ Bornholm_case_low = deepcopy(Bornholm_case)
 Bornholm_case_high = deepcopy(Bornholm_case)
 
 function Bornholm_simulation_low(grid,DCCB,preventive_decoupling,number_of_hours)
-    add_Denmark_W_2040_low(grid)
-    add_Germany_2040_low(grid)
+    _ACDC24.add_Denmark_W_2040_low(grid)
+    _ACDC24.add_Germany_2040_low(grid)
 
-    gen_costs,inertia_constants,emission_factor_CO2,start_up_cost,emission_factor_NOx,emission_factor_SOx = _WP1.gen_values()
-    _WP1.assigning_gen_values(grid,gen_costs,inertia_constants,emission_factor_CO2,start_up_cost,emission_factor_NOx,emission_factor_SOx)
-    add_VOLL_generators(grid)
+    gen_costs,inertia_constants,emission_factor_CO2,start_up_cost,emission_factor_NOx,emission_factor_SOx = _ACDC24.gen_values()
+    _ACDC24.assigning_gen_values(grid,gen_costs,inertia_constants,emission_factor_CO2,start_up_cost,emission_factor_NOx,emission_factor_SOx)
+    _ACDC24.add_VOLL_generators(grid)
     
 
     for hour in 1:number_of_hours
         hourly_grid = deepcopy(grid)
-        fix_hourly_load(hourly_grid,hour,load_series_DK,"DKW1")
-        fix_hourly_load(hourly_grid,hour,load_series_DE,"DE00")
-        fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_DE,wind_offshore_DE,solar_pv_DE,"DE00")
-        fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_DK,wind_offshore_DK,solar_pv_DK,"DKW1")
-        fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_SE,wind_offshore_SE,solar_pv_SE,"SE04")
+        _ACDC24.fix_hourly_load(hourly_grid,hour,load_series_DK,"DKW1")
+        _ACDC24.fix_hourly_load(hourly_grid,hour,load_series_DE,"DE00")
+        _ACDC24.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_DE,wind_offshore_DE,solar_pv_DE,"DE00")
+        _ACDC24.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_DK,wind_offshore_DK,solar_pv_DK,"DKW1")
+        _ACDC24.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_SE,wind_offshore_SE,solar_pv_SE,"SE04")
         hourly_results = _PMACDC.run_acdcopf(hourly_grid,formulation, optimizer; setting = s)
         DCCB["$hour"] = deepcopy(hourly_results)
         if (hourly_results["solution"]["convdc"]["1"]["pgrid"]*100/10^3 + hourly_results["solution"]["convdc"]["2"]["pgrid"]*100/10^3) >= 3.0
@@ -223,20 +227,20 @@ function Bornholm_simulation_low(grid,DCCB,preventive_decoupling,number_of_hours
 end
 
 function Bornholm_simulation_high(grid,DCCB,preventive_decoupling,number_of_hours)
-    add_Denmark_W_2040_high(grid)
-    add_Germany_2040_high(grid)
+    _ACDC24.add_Denmark_W_2040_high(grid)
+    _ACDC24.add_Germany_2040_high(grid)
 
-    gen_costs,inertia_constants,emission_factor_CO2,start_up_cost,emission_factor_NOx,emission_factor_SOx = _WP1.gen_values()
-    _WP1.assigning_gen_values(grid,gen_costs,inertia_constants,emission_factor_CO2,start_up_cost,emission_factor_NOx,emission_factor_SOx)
-    add_VOLL_generators(grid)
+    gen_costs,inertia_constants,emission_factor_CO2,start_up_cost,emission_factor_NOx,emission_factor_SOx = _ACDC24.gen_values()
+    _ACDC24.assigning_gen_values(grid,gen_costs,inertia_constants,emission_factor_CO2,start_up_cost,emission_factor_NOx,emission_factor_SOx)
+    _ACDC24.add_VOLL_generators(grid)
 
     for hour in 1:number_of_hours
         hourly_grid = deepcopy(grid)
-        fix_hourly_load(hourly_grid,hour,load_series_DK,"DKW1")
-        fix_hourly_load(hourly_grid,hour,load_series_DE,"DE00")
-        fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_DE,wind_offshore_DE,solar_pv_DE,"DE00")
-        fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_DK,wind_offshore_DK,solar_pv_DK,"DKW1")
-        fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_SE,wind_offshore_SE,solar_pv_SE,"SE04")
+        _ACDC24.fix_hourly_load(hourly_grid,hour,load_series_DK,"DKW1")
+        _ACDC24.fix_hourly_load(hourly_grid,hour,load_series_DE,"DE00")
+        _ACDC24.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_DE,wind_offshore_DE,solar_pv_DE,"DE00")
+        _ACDC24.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_DK,wind_offshore_DK,solar_pv_DK,"DKW1")
+        _ACDC24.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_SE,wind_offshore_SE,solar_pv_SE,"SE04")
         hourly_results = _PMACDC.run_acdcopf(hourly_grid,formulation, optimizer; setting = s)
         DCCB["$hour"] = deepcopy(hourly_results)
         if (hourly_results["solution"]["convdc"]["1"]["pgrid"]*100/10^3 + hourly_results["solution"]["convdc"]["2"]["pgrid"]*100/10^3) >= 3.0
