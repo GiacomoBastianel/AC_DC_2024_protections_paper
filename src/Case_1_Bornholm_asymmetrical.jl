@@ -153,7 +153,7 @@ function Bornholm_simulation_low(grid,DCCB,preventive_decoupling,number_of_hours
         _ACDC24.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_DE,wind_offshore_DE,solar_pv_DE,"DE00")
         _ACDC24.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_DK,wind_offshore_DK,solar_pv_DK,"DKW1")
         _ACDC24.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_SE,wind_offshore_SE,solar_pv_SE,"SE04")
-        hourly_results = _PMACDC.run_acdcopf(hourly_grid,formulation, optimizer; setting = s)
+        hourly_results = _PMACDC.solve_acdcopf(hourly_grid,formulation, optimizer; setting = s)
         DCCB["$hour"] = deepcopy(hourly_results)
         if (hourly_results["solution"]["convdc"]["1"]["pgrid"]*100/10^3 + hourly_results["solution"]["convdc"]["2"]["pgrid"]*100/10^3) >= 3.0
             hourly_grid["branchdc"]["1"]["rateA"] = 10.0
@@ -218,7 +218,7 @@ function Bornholm_simulation_low(grid,DCCB,preventive_decoupling,number_of_hours
             hourly_grid["branchdc"]["3"]["rateB"] = 10.0
             hourly_grid["branchdc"]["3"]["r"] = hourly_grid["branchdc"]["3"]["r"]/2 
 
-            hourly_result_L3 = _PMACDC.run_acdcopf(hourly_grid,formulation, optimizer; setting = s)
+            hourly_result_L3 = _PMACDC.solve_acdcopf(hourly_grid,formulation, optimizer; setting = s)
             preventive_decoupling["$hour"] = deepcopy(hourly_result_L3)
         else
             preventive_decoupling["$hour"] = deepcopy(hourly_results)
@@ -241,7 +241,7 @@ function Bornholm_simulation_high(grid,DCCB,preventive_decoupling,number_of_hour
         _ACDC24.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_DE,wind_offshore_DE,solar_pv_DE,"DE00")
         _ACDC24.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_DK,wind_offshore_DK,solar_pv_DK,"DKW1")
         _ACDC24.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_SE,wind_offshore_SE,solar_pv_SE,"SE04")
-        hourly_results = _PMACDC.run_acdcopf(hourly_grid,formulation, optimizer; setting = s)
+        hourly_results = _PMACDC.solve_acdcopf(hourly_grid,formulation, optimizer; setting = s)
         DCCB["$hour"] = deepcopy(hourly_results)
         if (hourly_results["solution"]["convdc"]["1"]["pgrid"]*100/10^3 + hourly_results["solution"]["convdc"]["2"]["pgrid"]*100/10^3) >= 3.0
             hourly_grid["branchdc"]["1"]["rateA"] = 10.0
@@ -306,7 +306,7 @@ function Bornholm_simulation_high(grid,DCCB,preventive_decoupling,number_of_hour
             hourly_grid["branchdc"]["3"]["rateB"] = 10.0
             hourly_grid["branchdc"]["3"]["r"] = hourly_grid["branchdc"]["3"]["r"]/2 
 
-            hourly_result_L3 = _PMACDC.run_acdcopf(hourly_grid,formulation, optimizer; setting = s)
+            hourly_result_L3 = _PMACDC.solve_acdcopf(hourly_grid,formulation, optimizer; setting = s)
             preventive_decoupling["$hour"] = deepcopy(hourly_result_L3)
         else
             preventive_decoupling["$hour"] = deepcopy(hourly_results)

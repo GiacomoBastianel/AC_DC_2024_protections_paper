@@ -147,12 +147,12 @@ function PEI_simulation_pole_to_ground_low(grid,DCCB,preventive_decoupling, resu
         _ACDC24.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_DE,wind_offshore_DE,solar_pv_DE,"DE00")
         _ACDC24.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_UK,wind_offshore_UK,solar_pv_UK,"UK00")
         _ACDC24.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_DK,wind_offshore_DK,solar_pv_DK,"DKW1")
-        hourly_results = _PMACDC.run_acdcopf(hourly_grid,formulation, optimizer; setting = s)
+        hourly_results = _PMACDC.solve_acdcopf(hourly_grid,formulation, optimizer; setting = s)
         if length(hourly_results["solution"]) > 5
             DCCB["$hour"] = deepcopy(hourly_results)
             if (hourly_results["solution"]["convdc"]["7"]["pconv"] + hourly_results["solution"]["convdc"]["12"]["pconv"]) < - 20.0 || (hourly_results["solution"]["convdc"]["7"]["pconv"] + hourly_results["solution"]["convdc"]["12"]["pconv"]) > 20.0
                 hourly_grid["branchdc"]["7"]["status"] = 0
-                hourly_results_pd = _PMACDC.run_acdcopf(hourly_grid,formulation, optimizer; setting = s)
+                hourly_results_pd = _PMACDC.solve_acdcopf(hourly_grid,formulation, optimizer; setting = s)
                 preventive_decoupling["$hour"] = deepcopy(hourly_results_pd)
             else
                 preventive_decoupling["$hour"] = deepcopy(hourly_results)                
@@ -189,12 +189,12 @@ function PEI_simulation_pole_to_ground_high(grid,DCCB,preventive_decoupling, res
         _ACDC24.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_DE,wind_offshore_DE,solar_pv_DE,"DE00")
         _ACDC24.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_UK,wind_offshore_UK,solar_pv_UK,"UK00")
         _ACDC24.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_DK,wind_offshore_DK,solar_pv_DK,"DKW1")
-        hourly_results = _PMACDC.run_acdcopf(hourly_grid,formulation, optimizer; setting = s)
+        hourly_results = _PMACDC.solve_acdcopf(hourly_grid,formulation, optimizer; setting = s)
         if length(hourly_results["solution"]) > 5
             DCCB["$hour"] = deepcopy(hourly_results)
             if (hourly_results["solution"]["convdc"]["7"]["pconv"] + hourly_results["solution"]["convdc"]["12"]["pconv"]) < - 20.0 || (hourly_results["solution"]["convdc"]["7"]["pconv"] + hourly_results["solution"]["convdc"]["12"]["pconv"]) > 20.0
                 hourly_grid["branchdc"]["7"]["status"] = 0
-                hourly_results_pd = _PMACDC.run_acdcopf(hourly_grid,formulation, optimizer; setting = s)
+                hourly_results_pd = _PMACDC.solve_acdcopf(hourly_grid,formulation, optimizer; setting = s)
                 preventive_decoupling["$hour"] = deepcopy(hourly_results_pd)
             else
                 preventive_decoupling["$hour"] = deepcopy(hourly_results)                
@@ -232,12 +232,12 @@ function PEI_simulation_pole_to_pole_low(grid,DCCB,preventive_decoupling,results
         _ACDC24.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_DE,wind_offshore_DE,solar_pv_DE,"DE00")
         _ACDC24.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_UK,wind_offshore_UK,solar_pv_UK,"UK00")
         _ACDC24.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_DK,wind_offshore_DK,solar_pv_DK,"DKW1")
-        hourly_results = _PMACDC.run_acdcopf(hourly_grid,formulation, optimizer; setting = s)
+        hourly_results = _PMACDC.solve_acdcopf(hourly_grid,formulation, optimizer; setting = s)
         if length(hourly_results["solution"]) > 5
             DCCB["$hour"] = deepcopy(hourly_results)
             if (hourly_results["solution"]["convdc"]["7"]["pconv"] + hourly_results["solution"]["convdc"]["9"]["pconv"] + hourly_results["solution"]["convdc"]["12"]["pconv"]) > 30.0 || (hourly_results["solution"]["convdc"]["7"]["pconv"] + hourly_results["solution"]["convdc"]["9"]["pconv"] + hourly_results["solution"]["convdc"]["12"]["pconv"]) < - 30.0
                 hourly_grid["branchdc"]["7"]["status"] = 0
-                hourly_results_pd = _PMACDC.run_acdcopf(hourly_grid,formulation, optimizer; setting = s)
+                hourly_results_pd = _PMACDC.solve_acdcopf(hourly_grid,formulation, optimizer; setting = s)
                 preventive_decoupling["$hour"] = deepcopy(hourly_results_pd)
             else
                 preventive_decoupling["$hour"] = deepcopy(hourly_results)                
@@ -274,12 +274,12 @@ function PEI_simulation_pole_to_pole_high(grid,DCCB,preventive_decoupling,result
         _ACDC24.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_DE,wind_offshore_DE,solar_pv_DE,"DE00")
         _ACDC24.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_UK,wind_offshore_UK,solar_pv_UK,"UK00")
         _ACDC24.fix_RES_time_series_zone(hourly_grid,hour,wind_onshore_DK,wind_offshore_DK,solar_pv_DK,"DKW1")
-        hourly_results = _PMACDC.run_acdcopf(hourly_grid,formulation, optimizer; setting = s)
+        hourly_results = _PMACDC.solve_acdcopf(hourly_grid,formulation, optimizer; setting = s)
         if length(hourly_results["solution"]) > 5
             DCCB["$hour"] = deepcopy(hourly_results)
             if (hourly_results["solution"]["convdc"]["7"]["pconv"] + hourly_results["solution"]["convdc"]["9"]["pconv"] + hourly_results["solution"]["convdc"]["12"]["pconv"]) > 30.0 || (hourly_results["solution"]["convdc"]["7"]["pconv"] + hourly_results["solution"]["convdc"]["9"]["pconv"] + hourly_results["solution"]["convdc"]["12"]["pconv"]) < - 30.0
                 hourly_grid["branchdc"]["7"]["status"] = 0
-                hourly_results_pd = _PMACDC.run_acdcopf(hourly_grid,formulation, optimizer; setting = s)
+                hourly_results_pd = _PMACDC.solve_acdcopf(hourly_grid,formulation, optimizer; setting = s)
                 preventive_decoupling["$hour"] = deepcopy(hourly_results_pd)
             else
                 preventive_decoupling["$hour"] = deepcopy(hourly_results)                
