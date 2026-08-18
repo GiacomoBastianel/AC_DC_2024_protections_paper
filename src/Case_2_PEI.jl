@@ -92,7 +92,7 @@ year = 2030
 CY = 1995
 
 DE_zone = "DE00"
-BE_zone = "BE_00"
+BE_zone = "BE00"
 DK_zone = "DKW1"
 UK_zone = "UK00"
 FR_zone = "FR00"
@@ -299,6 +299,13 @@ results_DCCB_PEI_ptp_low = Dict()
 results_preventive_decoupling_PEI_ptp_low = Dict()
 results_DCCB_PEI_ptp_high = Dict()
 results_preventive_decoupling_PEI_ptp_high = Dict()
+
+BE_grid_energy_island["load"]["1"]["flex"] = 0
+BE_grid_energy_island["load"]["2"]["flex"] = 0
+BE_grid_energy_island["load"]["3"]["flex"] = 0
+BE_grid_energy_island["load"]["4"]["flex"] = 0
+BE_grid_energy_island["load"]["5"]["flex"] = 0
+
 
 
 PEI_ptg_low = deepcopy(BE_grid_energy_island)

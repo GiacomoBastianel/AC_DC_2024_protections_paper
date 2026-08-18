@@ -596,7 +596,7 @@ function hourly_opf_BE(grid,number_of_hours,load_series_BE,load_series_UK,wind_o
     for hour in 1:number_of_hours
         fix_hourly_loads_and_gen_interconnections(hourly_grid,hour,load_series_BE,load_series_UK)
         fix_RES_time_series(hourly_grid,hour,wind_onshore, wind_offshore, solar_pv)
-        hourly_results = _PMACDC.run_acdcopf(hourly_grid,formulation, optimizer; setting = s)
+        hourly_results = _PMACDC.solve_acdcopf(hourly_grid,formulation, optimizer; setting = s)
         results["$hour"] = deepcopy(hourly_results)
         grid_hour["$hour"] = deepcopy(hourly_grid)
     end
@@ -610,7 +610,7 @@ function hourly_opf_BE_UK(grid,number_of_hours,load_series_BE,load_series_UK,win
     for hour in 1:number_of_hours
         fix_hourly_loads_and_gen_interconnections(hourly_grid,hour,load_series_BE,load_series_UK)
         fix_RES_time_series_BE_UK(hourly_grid,hour,wind_onshore_BE, wind_offshore_BE, solar_pv_BE,wind_onshore_UK, wind_offshore_UK, solar_pv_UK)
-        hourly_results = _PMACDC.run_acdcopf(hourly_grid,formulation, optimizer; setting = s)
+        hourly_results = _PMACDC.solve_acdcopf(hourly_grid,formulation, optimizer; setting = s)
         results["$hour"] = deepcopy(hourly_results)
         grid_hour["$hour"] = deepcopy(hourly_grid)
     end
@@ -624,7 +624,7 @@ function hourly_opf_BE_UK_FR(grid,number_of_hours,load_series_BE,load_series_UK,
     for hour in 1:number_of_hours
         fix_hourly_loads_and_gen_interconnections_UK_FR(hourly_grid,hour,load_series_BE,load_series_UK,load_series_FR)
         fix_RES_time_series_BE_UK_FR(hourly_grid,hour,wind_onshore_BE, wind_offshore_BE, solar_pv_BE,wind_onshore_UK, wind_offshore_UK, solar_pv_UK, wind_onshore_FR, wind_offshore_FR, solar_pv_FR)
-        hourly_results = _PMACDC.run_acdcopf(hourly_grid,formulation, optimizer; setting = s)
+        hourly_results = _PMACDC.solve_acdcopf(hourly_grid,formulation, optimizer; setting = s)
         results["$hour"] = deepcopy(hourly_results)
         grid_hour["$hour"] = deepcopy(hourly_grid)
     end
@@ -639,7 +639,7 @@ function hourly_opf_BE_UK_DK(grid,number_of_hours,load_series_BE,load_series_UK,
     for hour in 1:number_of_hours
         fix_hourly_loads_and_gen_interconnections_UK_DK(hourly_grid,hour,load_series_BE,load_series_UK,load_series_DK)
         fix_RES_time_series_BE_UK_DK(hourly_grid,hour,wind_onshore_BE, wind_offshore_BE, solar_pv_BE,wind_onshore_UK, wind_offshore_UK, solar_pv_UK,wind_onshore_DK, wind_offshore_DK, solar_pv_DK)
-        hourly_results = _PMACDC.run_acdcopf(hourly_grid,formulation, optimizer; setting = s)
+        hourly_results = _PMACDC.solve_acdcopf(hourly_grid,formulation, optimizer; setting = s)
         results["$hour"] = deepcopy(hourly_results)
         grid_hour["$hour"] = deepcopy(hourly_grid)
     end
@@ -653,7 +653,7 @@ function hourly_opf_BE_UK_DK_pole_to_ground(grid,number_of_hours,load_series_BE,
     for hour in 1:number_of_hours
         fix_hourly_loads_and_gen_interconnections_UK_DK(hourly_grid,hour,load_series_BE,load_series_UK,load_series_DK)
         fix_RES_time_series_BE_UK_DK(hourly_grid,hour,wind_onshore_BE, wind_offshore_BE, solar_pv_BE,wind_onshore_UK, wind_offshore_UK, solar_pv_UK,wind_onshore_DK, wind_offshore_DK, solar_pv_DK)
-        hourly_results = _PMACDC.run_acdcopf(hourly_grid,formulation, optimizer; setting = s)
+        hourly_results = _PMACDC.solve_acdcopf(hourly_grid,formulation, optimizer; setting = s)
         if length(hourly_results["solution"]) > 5
             if (hourly_results["solution"]["convdc"]["7"]["pconv"] + hourly_results["solution"]["convdc"]["9"]["pconv"]) < - 20.0 || (hourly_results["solution"]["convdc"]["7"]["pconv"] + hourly_results["solution"]["convdc"]["9"]["pconv"]) > 20.0
                 hourly_grid["branchdc"]["7"]["status"] = 0
@@ -676,7 +676,7 @@ function hourly_opf_BE_UK_DK_pole_to_pole(grid,number_of_hours,load_series_BE,lo
     for hour in 1:number_of_hours
         fix_hourly_loads_and_gen_interconnections_UK_DK(hourly_grid,hour,load_series_BE,load_series_UK,load_series_DK)
         fix_RES_time_series_BE_UK_DK(hourly_grid,hour,wind_onshore_BE, wind_offshore_BE, solar_pv_BE,wind_onshore_UK, wind_offshore_UK, solar_pv_UK,wind_onshore_DK, wind_offshore_DK, solar_pv_DK)
-        hourly_results = _PMACDC.run_acdcopf(hourly_grid,formulation, optimizer; setting = s)
+        hourly_results = _PMACDC.solve_acdcopf(hourly_grid,formulation, optimizer; setting = s)
         if length(hourly_results["solution"]) > 5
             if (hourly_results["solution"]["convdc"]["7"]["pconv"] + hourly_results["solution"]["convdc"]["9"]["pconv"] + hourly_results["solution"]["convdc"]["12"]["pconv"]) > 30.0 || (hourly_results["solution"]["convdc"]["7"]["pconv"] + hourly_results["solution"]["convdc"]["9"]["pconv"] + hourly_results["solution"]["convdc"]["12"]["pconv"]) < - 30.0
                 hourly_grid["branchdc"]["7"]["status"] = 0
@@ -699,7 +699,7 @@ function hourly_opf_case_1(grid,number_of_hours,load_series_DE,load_series_DK, w
     for hour in 1:number_of_hours
         fix_hourly_loads_and_gen_interconnections_UK_DK(hourly_grid,hour,load_series_BE,load_series_UK,load_series_DK)
         fix_RES_time_series_BE_UK_DK(hourly_grid,hour,wind_onshore_BE, wind_offshore_BE, solar_pv_BE,wind_onshore_UK, wind_offshore_UK, solar_pv_UK,wind_onshore_DK, wind_offshore_DK, solar_pv_DK)
-        hourly_results = _PMACDC.run_acdcopf(hourly_grid,formulation, optimizer; setting = s)
+        hourly_results = _PMACDC.solve_acdcopf(hourly_grid,formulation, optimizer; setting = s)
         results["$hour"] = deepcopy(hourly_results)
         grid_hour["$hour"] = deepcopy(hourly_grid)
     end

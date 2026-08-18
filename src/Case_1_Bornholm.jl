@@ -133,6 +133,10 @@ results_preventive_decoupling_low = Dict()
 results_DCCB_high = Dict()
 results_preventive_decoupling_high = Dict()
 
+# Fix load not flexible
+Bornholm_case["load"]["1"]["flex"] = 0
+Bornholm_case["load"]["2"]["flex"] = 0
+
 Bornholm_case_low = deepcopy(Bornholm_case)
 Bornholm_case_high = deepcopy(Bornholm_case)
 
@@ -141,7 +145,7 @@ function Bornholm_simulation_low(grid,DCCB,preventive_decoupling,number_of_hours
     _ACDC24.add_Germany_2040_low(grid)
 
     gen_costs,inertia_constants,emission_factor_CO2,start_up_cost,emission_factor_NOx,emission_factor_SOx = _ACDC24.gen_values()
-    _ACDC24.assigning_gen_values(grid,gen_costs,inertia_constasolve_acdcopfnts,emission_factor_CO2,start_up_cost,emission_factor_NOx,emission_factor_SOx)
+    _ACDC24.assigning_gen_values(grid,gen_costs,inertia_constants,emission_factor_CO2,start_up_cost,emission_factor_NOx,emission_factor_SOx)
     _ACDC24.add_VOLL_generators(grid)
     
 
@@ -198,10 +202,10 @@ Bornholm_simulation_high(Bornholm_case_high,results_DCCB_high,results_preventive
 
 results_folder = folder_results
 
-json_string_1 = JSON.json(results_DCCB_low)
-json_string_2 = JSON.json(results_preventive_decoupling_low)
-json_string_3 = JSON.json(results_DCCB_high)
-json_string_4 = JSON.json(results_preventive_decoupling_high)
+json_string_1 = JSON.json(results_DCCB_low,allownan=true)
+json_string_2 = JSON.json(results_preventive_decoupling_low,allownan=true)
+json_string_3 = JSON.json(results_DCCB_high,allownan=true)
+json_string_4 = JSON.json(results_preventive_decoupling_high,allownan=true)
 
 open(joinpath(results_folder,"Bornholm_results_DCCB_low_$(number_of_hours).json"),"w") do f 
     write(f, json_string_1) 

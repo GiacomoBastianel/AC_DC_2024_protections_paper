@@ -134,8 +134,13 @@ results_preventive_decoupling_low = Dict()
 results_DCCB_high = Dict()
 results_preventive_decoupling_high = Dict()
 
+Bornholm_case["load"]["1"]["flex"] = 0
+Bornholm_case["load"]["2"]["flex"] = 0
+
 Bornholm_case_low = deepcopy(Bornholm_case)
 Bornholm_case_high = deepcopy(Bornholm_case)
+
+
 
 function Bornholm_simulation_low(grid,DCCB,preventive_decoupling,number_of_hours)
     _ACDC24.add_Denmark_W_2040_low(grid)
