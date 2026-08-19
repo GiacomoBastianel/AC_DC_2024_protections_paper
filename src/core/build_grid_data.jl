@@ -1575,12 +1575,13 @@ function add_France_2040_high(grid)
     grid["load"]["3"]["name_no_kV"] = "FR_aggregated"
 end 
 
-function add_France_2040_low(grid)
+function add_France_2040_low(grid_in)
     # Source: https://transparency.entsoe.eu/generation/r2/installedGenerationCapacityAggregation/show?name=&defaultValue=true&viewType=TABLE&areaType=BZN&atch=false&dateTime.dateTime=01.01.2024+00:00|UTC|YEAR&dateTime.endDateTime=01.01.2024+00:00|UTC|YEAR&area.values=CTY|10YFR-RTE------C!BZN|10YFR-RTE------C&productionType.values=B01&productionType.values=B25&productionType.values=B02&productionType.values=B03&productionType.values=B04&productionType.values=B05&productionType.values=B06&productionType.values=B07&productionType.values=B08&productionType.values=B09&productionType.values=B10&productionType.values=B11&productionType.values=B12&productionType.values=B13&productionType.values=B14&productionType.values=B20&productionType.values=B15&productionType.values=B16&productionType.values=B17&productionType.values=B18&productionType.values=B19 
     # Source: https://energy.ec.europa.eu/system/files/2022-08/fr_final_necp_main_en.pdf
     # Source: https://www.enerdata.net/publications/daily-energy-news/france-targets-41-renewables-its-final-energy-mix-2030.html#:~:text=Specifically%2C%20France%20aims%20for%20a,should%20be%20committed%20by%202026.(National Energy and Climate Plan (NECP))
     #grid["bus"]["2"]["zone"] = "FR00"
 
+    grid = deepcopy(grid_in)
     # Add FR generators
     grid["gen"]["308"] = deepcopy(grid["gen"]["2"])
     grid["gen"]["308"]["source_id"][2] = 308
@@ -1695,6 +1696,8 @@ function add_France_2040_low(grid)
     grid["load"]["3"]["full_name_kV"] = "FR_aggregated_380"
     grid["load"]["3"]["name"] = "FR_aggregated_380"
     grid["load"]["3"]["name_no_kV"] = "FR_aggregated"
+
+    return grid
 end 
 
 function add_France_2040_high_PEI(grid)
@@ -2568,7 +2571,7 @@ function add_Germany_2040_low(grid)
     grid["gen"]["204"]["substation_full_name"] = "DE00"
     grid["gen"]["204"]["substation_full_name_kV"] = "DE00_380"
     grid["gen"]["204"]["substation"] = "DE00_380"
-    grid["gen"]["204"]["name"] = "DK_capacity"
+    grid["gen"]["204"]["name"] = "DE_PV"
     grid["gen"]["204"]["gen_bus"] = 2
     grid["gen"]["204"]["zone"] = "DE00"
     grid["gen"]["204"]["type"] = "Solar PV"
@@ -2652,7 +2655,7 @@ function add_Germany_2040_high(grid)
     grid["gen"]["203"]["substation_full_name"] = "DE00"
     grid["gen"]["203"]["substation_full_name_kV"] = "DE00_380"
     grid["gen"]["203"]["substation"] = "DE00_380"
-    grid["gen"]["203"]["name"] = "DK_capacity"
+    grid["gen"]["203"]["name"] = "DE_onshore"
     grid["gen"]["203"]["gen_bus"] = 2
     grid["gen"]["203"]["zone"] = "DE00"
     grid["gen"]["203"]["type"] = "Onshore Wind"
@@ -2672,7 +2675,7 @@ function add_Germany_2040_high(grid)
     grid["gen"]["204"]["substation_full_name"] = "DE00"
     grid["gen"]["204"]["substation_full_name_kV"] = "DE00_380"
     grid["gen"]["204"]["substation"] = "DE00_380"
-    grid["gen"]["204"]["name"] = "DK_capacity"
+    grid["gen"]["204"]["name"] = "DE_PV"
     grid["gen"]["204"]["gen_bus"] = 2
     grid["gen"]["204"]["zone"] = "DE00"
     grid["gen"]["204"]["type"] = "Solar PV"
@@ -3394,7 +3397,7 @@ function add_energy_island_denmark(grid)
     # Add DK load
     grid["load"]["3"] = deepcopy(grid["load"]["1"])
     grid["load"]["3"]["source_id"][2] = 3
-    grid["load"]["3"]["index"] = 2
+    grid["load"]["3"]["index"] = 3
     grid["load"]["3"]["load_bus"] = 1380
     grid["load"]["3"]["pmax"] = 45.0
     grid["load"]["3"]["qmax"] = 22.0

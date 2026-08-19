@@ -10,4 +10,5 @@ module ACDC_2024_paper
     const dataDir = joinpath(dirname(@__DIR__),"data")
     include("core/load_data.jl")
     include("core/build_grid_data.jl")
+    include("core/build_case_study_functions.jl")
 end
